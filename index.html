@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0c11">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Caisse">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Burger Co. — Caisse</title>
+<style>
+  :root {
+    --bg: #0a0c11;
+    --surface: #131720;
+    --surface-2: #1a1f2b;
+    --surface-3: #232a38;
+    --border: #272e3d;
+    --text: #eef0f6;
+    --muted: #8a92a6;
+    --accent: #ff6a2b;
+    --accent-2: #ffb340;
+    --accent-soft: rgba(255,106,43,.14);
+    --ok: #2fd27a;
+    --danger: #ff4d5e;
+    --info: #4aa3ff;
+    --radius: 18px;
+    --cart-w: 390px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+    background: var(--bg); color: var(--text);
+    color-scheme: dark;
+    overscroll-behavior: none;
+    user-select: none; -webkit-user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background:
+      radial-gradient(900px 420px at 85% -10%, rgba(255,106,43,.10), transparent 60%),
+      radial-gradient(700px 380px at -10% 0%, rgba(255,179,64,.06), transparent 60%),
+      var(--bg);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    display: flex; flex-direction: column;
+  }
+  input, select { user-select: text; -webkit-user-select: text; font-family: inherit; color: var(--text); background: var(--surface-2); }
+  input::placeholder { color: #5d657a; }
+  input:focus, select:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft); }
+  button { font-family: inherit; transition: transform .12s ease, background .2s ease, opacity .2s; }
+  button:active { transform: scale(.97); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* HEADER */
+  header {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(10,12,17,.78);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    color: var(--text);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  header > div:last-child { flex-wrap: wrap; justify-content: flex-end; }
+  .logo { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .logo-icon {
+    width: 40px; height: 40px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-radius: 12px; display: grid; place-items: center; font-size: 22px;
+    box-shadow: 0 6px 18px rgba(255,106,43,.35);
+  }
+  .logo h1 { font-size: 17px; font-weight: 800; letter-spacing: .6px; white-space: nowrap; }
+  .logo p { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; margin-top: 1px; }
+
+  .mode-switch { display: none; align-items: center; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); padding: 3px; border-radius: 14px; }
+  .mode-switch.show { display: flex; }
+  .mode-btn { border: none; background: transparent; color: var(--muted); padding: 7px 12px; border-radius: 11px; font-size: 11px; font-weight: 800; letter-spacing: .5px; cursor: pointer; }
+  .mode-btn.active { background: linear-gradient(135deg, var(--accent), #ff8a4d); color: #fff; box-shadow: 0 4px 12px rgba(255,106,43,.35); }
+  .header-settings-btn, .header-journal-btn {
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+    border-radius: 12px; padding: 9px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .header-journal-btn:hover, .header-settings-btn:hover { background: var(--surface-3); }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 8px; padding: 10px 14px; overflow-x: auto; scrollbar-width: none;
+    background: transparent; border-bottom: 1px solid var(--border);
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0; padding: 9px 16px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer;
+  }
+  .tab:hover { color: var(--text); background: var(--surface-2); }
+  .tab.active { background: linear-gradient(135deg, var(--accent), #ff8a4d); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(255,106,43,.32); }
+
+  /* PRODUITS */
+  .products { flex: 1; overflow-y: auto; padding: 16px 14px 130px; -webkit-overflow-scrolling: touch; }
+  .category-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin: 6px 4px 14px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px; position: relative; overflow: hidden; cursor: pointer;
+    transition: transform .15s ease, border-color .2s, box-shadow .2s;
+  }
+  .card:hover { border-color: rgba(255,106,43,.5); box-shadow: 0 10px 30px rgba(0,0,0,.35); transform: translateY(-2px); }
+  .card:active { transform: scale(.97); }
+  .card-img {
+    height: 84px; border-radius: 13px; display: grid; place-items: center; font-size: 42px; margin-bottom: 10px;
+    background: radial-gradient(circle at 30% 20%, rgba(255,179,64,.35), transparent 60%), linear-gradient(135deg, #2a2230, #1b1f2c);
+    border: 1px solid var(--border);
+  }
+  .card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; line-height: 1.25; }
+  .card-desc { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.35; min-height: 29px; }
+  .card-bottom { display: flex; justify-content: space-between; align-items: center; }
+  .card-price { font-size: 16px; font-weight: 800; color: var(--accent-2); }
+  .add-btn {
+    width: 34px; height: 34px; border-radius: 11px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #ff8a4d); color: #fff;
+    font-size: 20px; font-weight: 700; display: grid; place-items: center;
+    box-shadow: 0 4px 12px rgba(255,106,43,.35);
+  }
+
+  /* PANIER */
+  .cart {
+    position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom));
+    width: min(430px, calc(100% - 28px));
+    background: rgba(19,23,32,.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--border); border-radius: 22px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.6);
+    padding: 12px 14px; z-index: 20;
+    transition: all .3s cubic-bezier(.4,0,.2,1);
+  }
+  .cart:not(.open) { width: auto; min-width: 200px; padding: 11px 16px; border-radius: 999px; cursor: pointer; }
+  .cart:not(.open) .cart-handle, .cart:not(.open) .cart-items, .cart:not(.open) .pay-btn,
+  .cart:not(.open) .cart-order-name, .cart:not(.open) .cancel-edit-btn { display: none; }
+  .cart:not(.open) .cart-header { border-bottom: none; padding-bottom: 0; gap: 16px; }
+  .cart-handle { width: 42px; height: 4px; background: var(--surface-3); border-radius: 3px; margin: 0 auto 10px; }
+  .cart-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .cart-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .cart-count { background: var(--accent); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 800; }
+  .cart-total { font-size: 18px; font-weight: 800; color: var(--accent-2); }
+  .cart-order-name { padding: 10px 0 4px; }
+  .cart-order-name label { display: block; font-size: 10px; font-weight: 700; margin-bottom: 5px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .cart-order-name input { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 16px; }
+  .cart-items { max-height: 190px; overflow-y: auto; margin: 4px 0 12px; }
+  .cart-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .cart-item:last-child { border-bottom: none; }
+  .cart-item-emoji { width: 38px; height: 38px; flex-shrink: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; display: grid; place-items: center; font-size: 20px; }
+  .cart-item-info { flex: 1; min-width: 0; }
+  .cart-item-name { font-size: 13px; font-weight: 600; }
+  .cart-item-price { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .cart-item-price b { color: var(--text); }
+  .qty-ctrl { display: flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
+  .qty-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-3); border: none; font-weight: 700; font-size: 15px; cursor: pointer; color: var(--text); }
+  .qty-btn.minus { color: var(--danger); }
+  .qty-btn.plus { color: var(--ok); }
+  .qty-val { font-size: 13px; font-weight: 700; min-width: 16px; text-align: center; }
+  .empty-cart { text-align: center; padding: 22px; color: var(--muted); font-size: 13px; }
+  .cancel-edit-btn { width: 100%; border: 1px solid rgba(255,77,94,.35); border-radius: 12px; padding: 9px; margin-bottom: 8px; background: rgba(255,77,94,.12); color: var(--danger); font-weight: 800; font-size: 12px; cursor: pointer; }
+  .pay-btn {
+    width: 100%; padding: 16px 18px; border: none; border-radius: 16px; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #ff8a4d); color: #fff;
+    font-size: 15px; font-weight: 800; letter-spacing: .5px;
+    box-shadow: 0 8px 24px rgba(255,106,43,.4);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .pay-btn:disabled { background: var(--surface-3); color: var(--muted); box-shadow: none; cursor: not-allowed; }
+
+  /* MODALS */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(4,6,10,.7);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: none; align-items: flex-end; justify-content: center; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .modal-bg.show { display: flex; animation: fadeIn .22s; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-bottom: none;
+    width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto;
+    border-radius: 26px 26px 0 0;
+    padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -20px 60px rgba(0,0,0,.5);
+    animation: slideUp .3s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes slideUp { from{transform:translateY(60px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal h2 { font-size: 20px; margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .summary { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+  .summary-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  .summary-row.total { font-size: 18px; font-weight: 800; color: var(--text); padding-top: 10px; border-top: 1px dashed var(--border); margin-top: 8px; }
+  .summary-row.total span:last-child { color: var(--accent-2); }
+  .modal-actions { display: flex; gap: 10px; }
+  .btn-cancel, .btn-confirm { flex: 1; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; border: none; cursor: pointer; }
+  .btn-cancel { background: var(--surface-3); color: var(--text); }
+  .btn-confirm { background: linear-gradient(135deg, var(--accent), #ff8a4d); color: #fff; box-shadow: 0 6px 18px rgba(255,106,43,.35); }
+
+  .supp-options { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin: 16px 0; }
+  .supp-option { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 14px; padding: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; }
+  .supp-option:hover { border-color: var(--accent); }
+  .supp-list { max-height: 270px; overflow-y: auto; margin: 12px 0 18px; }
+  .supp-add { display: flex; width: 100%; justify-content: space-between; align-items: center; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-2); color: var(--text); padding: 12px 14px; margin-bottom: 7px; font-weight: 700; cursor: pointer; }
+  .supp-add b { color: var(--accent-2); }
+  .supp-add.active { background: var(--accent-soft); border-color: var(--accent); }
+
+  .quick-calc-btn { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 11px; margin: 10px 0 14px; background: var(--surface-2); color: var(--text); font-weight: 700; cursor: pointer; }
+  .order-name-field label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .order-name-field input { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 16px; }
+  .payment-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+  .payment-option { border: 1px solid var(--border); border-radius: 13px; padding: 13px 4px; background: var(--surface-2); color: var(--muted); font-weight: 800; font-size: 12px; cursor: pointer; }
+  .payment-option.active { background: var(--accent-soft); color: var(--accent-2); border-color: var(--accent); }
+  .cash-payment-box { display: none; margin: 10px 0; padding: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; }
+  .cash-payment-box.show { display: block; }
+  .cash-payment-label { font-size: 11px; font-weight: 800; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .cash-payment-input { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 20px; font-weight: 800; text-align: right; background: var(--bg); }
+  .cash-result { margin-top: 10px; padding: 11px; border-radius: 12px; background: var(--bg); font-size: 15px; font-weight: 900; text-align: center; color: var(--muted); }
+  .cash-result.change { color: var(--ok); }
+  .cash-result.missing { color: var(--danger); }
+
+  .mini-calculator-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(4,6,10,.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
+  .mini-calculator-overlay.show { display: flex; animation: fadeIn .2s; }
+  .mini-calculator { width: min(340px,100%); background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+  .mini-calculator-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+  .calculator-display { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 13px; font-size: 22px; text-align: right; margin-bottom: 10px; background: var(--bg); }
+  .calculator-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .calculator-grid button { border: 0; border-radius: 12px; padding: 14px 5px; font-size: 16px; font-weight: 800; background: var(--surface-3); color: var(--text); cursor: pointer; }
+  .calculator-grid button[data-calc="/"], .calculator-grid button[data-calc="*"], .calculator-grid button[data-calc="-"], .calculator-grid button[data-calc="+"] { background: var(--accent-soft); color: var(--accent-2); }
+  .calculator-grid button[data-calc="C"] { color: var(--danger); }
+  .calculator-grid .calculator-equals { grid-column: 1 / -1; background: linear-gradient(135deg, var(--accent), #ff8a4d); color: #fff; }
+  .calculator-close { width: 100%; border: 0; border-radius: 12px; padding: 12px; margin-top: 10px; background: var(--surface-3); color: var(--text); font-weight: 700; cursor: pointer; }
+
+  .success { text-align: center; padding: 20px 0; }
+  .success-icon { width: 80px; height: 80px; background: linear-gradient(135deg, var(--ok), #1fa65e); border-radius: 50%; margin: 0 auto 16px; display: grid; place-items: center; font-size: 40px; color: #fff; box-shadow: 0 10px 30px rgba(47,210,122,.4); animation: pop .4s cubic-bezier(.175,.885,.32,1.275); }
+  @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+  .success h2 { color: var(--ok); margin-bottom: 6px; }
+  .success p { color: var(--muted); font-size: 13px; }
+
+  .toast { position: fixed; top: calc(16px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-220px); background: var(--surface-3); color: var(--text); border: 1px solid var(--border); padding: 11px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; z-index: 20000; transition: transform .3s; box-shadow: 0 10px 30px rgba(0,0,0,.5); max-width: 90%; text-align: center; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* RÉGLAGES */
+  .settings, .journal { padding: 4px 2px; }
+  .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .settings-title { font-size: 22px; font-weight: 800; margin-bottom: 16px; }
+  .settings-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 13px; font-weight: 700; }
+  .settings-value { font-size: 12px; color: var(--muted); }
+  .settings-input { width: 130px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; }
+  .settings-btn { border: none; border-radius: 12px; padding: 10px 14px; font-weight: 800; cursor: pointer; }
+  .product-admin-row { display: grid; grid-template-columns: minmax(0,1fr) 74px 74px auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .product-admin-row:last-child { border-bottom: none; }
+  .product-admin-input, .supp-admin-input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px; font-size: 13px; }
+  .product-admin-cat { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .product-admin-actions { display: flex; gap: 5px; }
+  .product-admin-btn, .supp-admin-btn { border: 0; border-radius: 10px; padding: 9px 10px; font-size: 12px; font-weight: 800; cursor: pointer; color: var(--text); }
+  .product-admin-edit { background: var(--surface-3); }
+  .product-admin-delete, .supp-admin-delete { background: rgba(255,77,94,.18); color: var(--danger); }
+  .product-admin-add, .supp-admin-add { width: 100%; border: 1px dashed var(--border); border-radius: 13px; padding: 12px; background: var(--surface-2); color: var(--accent-2); font-weight: 800; cursor: pointer; margin-top: 10px; }
+  .product-admin-add:hover, .supp-admin-add:hover { border-color: var(--accent); }
+  .product-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .product-form label { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .product-form input, .product-form select { width: 100%; margin-top: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; }
+  .product-form .full { grid-column: 1/-1; }
+  .supp-admin-list { margin-top: 12px; }
+  .supp-admin-row { display: grid; grid-template-columns: minmax(0,1fr) 90px auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  #newProductForm { background: var(--surface-2); }
+
+  /* JOURNAL */
+  .accounting-summary { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin: 0 0 16px; }
+  .accounting-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+  .accounting-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .acc-count { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .acc-paid { background: linear-gradient(135deg, rgba(47,210,122,.16), rgba(47,210,122,.04)); border-color: rgba(47,210,122,.45); }
+  .acc-paid .acc-count { background: rgba(47,210,122,.18); color: var(--ok); }
+  .acc-paid .accounting-card-value { color: var(--ok); }
+  .acc-pending { background: linear-gradient(135deg, rgba(255,77,94,.17), rgba(255,77,94,.04)); border-color: rgba(255,77,94,.45); }
+  .acc-pending .acc-count { background: rgba(255,77,94,.18); color: var(--danger); }
+  .acc-pending .accounting-card-value { color: var(--danger); }
+  .acc-picked { grid-column: 1 / -1; }
+  .accounting-card-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .accounting-card-value { font-size: 22px; font-weight: 900; margin-top: 5px; }
+  .pay-split { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); display: grid; gap: 4px; }
+  .pay-split-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+  .pay-split-row b { color: var(--text); font-weight: 800; }
+  .pay-split-row small { font-size: 10px; }
+  .accounting-card-sub { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .journal-main-actions { display: flex; gap: 8px; margin: 0 0 14px; }
+  .journal-main-action { flex: 1; border: 1px solid var(--border); border-radius: 13px; padding: 12px 10px; font-size: 12px; font-weight: 800; cursor: pointer; background: var(--surface-2); color: var(--text); }
+  .journal-header { display: flex; align-items: center; justify-content: space-between; margin: 8px 4px 14px; }
+  .journal-title { font-size: 22px; font-weight: 800; }
+  .journal-count { background: var(--surface-2); border: 1px solid var(--border); color: var(--accent-2); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+  .journal-empty { background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 40px 20px; text-align: center; color: var(--muted); }
+  .journal-list { display: block; }
+  .journal-order { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; transition: .2s ease; }
+  .journal-order.is-paid { border: 2px solid var(--ok); background: linear-gradient(180deg, rgba(47,210,122,.14), rgba(47,210,122,.04) 60%, var(--surface)); box-shadow: 0 0 0 1px rgba(47,210,122,.15), 0 8px 28px rgba(47,210,122,.18); }
+  .journal-order.is-pending { border: 2px solid var(--danger); background: linear-gradient(180deg, rgba(255,77,94,.15), rgba(255,77,94,.04) 60%, var(--surface)); box-shadow: 0 0 0 1px rgba(255,77,94,.15), 0 8px 28px rgba(255,77,94,.2); }
+  .journal-order.picked-up, .journal-order.picked-up.is-paid, .journal-order.picked-up.is-pending { opacity: .6; border: 1px solid var(--border); background: var(--surface); box-shadow: none; }
+  .journal-order.picked-up .journal-total strong { color: var(--muted); text-shadow: none; }
+  .journal-top-right { display: flex; align-items: center; gap: 8px; }
+  .journal-delete { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); font-size: 13px; font-weight: 800; cursor: pointer; display: grid; place-items: center; line-height: 1; }
+  .journal-delete:hover { background: rgba(255,77,94,.18); color: var(--danger); border-color: rgba(255,77,94,.5); }
+  .journal-order-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
+  .journal-number { font-size: 15px; font-weight: 800; }
+  .journal-status { font-size: 10px; font-weight: 800; padding: 5px 10px; border-radius: 999px; white-space: nowrap; letter-spacing: .5px; }
+  .journal-status.paid { background: rgba(47,210,122,.15); color: var(--ok); }
+  .journal-status.reception { background: rgba(255,77,94,.15); color: var(--danger); }
+  .journal-item { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 12px; color: var(--muted); }
+  .journal-total { border-top: 1px dashed var(--border); margin-top: 10px; padding: 12px 0 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+  .journal-total small { font-size: 10px; font-weight: 800; letter-spacing: 3px; color: var(--muted); }
+  .journal-total strong { font-size: 34px; font-weight: 900; line-height: 1.1; letter-spacing: .5px; }
+  .is-paid .journal-total strong { color: var(--ok); text-shadow: 0 0 22px rgba(47,210,122,.55); }
+  .is-pending .journal-total strong { color: var(--danger); text-shadow: 0 0 22px rgba(255,77,94,.55); }
+  .journal-order .journal-meta { text-align: center; }
+  .journal-cash { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; padding: 9px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; font-size: 12px; color: var(--muted); }
+  .journal-cash b { color: var(--text); }
+  .journal-cash span:last-child b { color: var(--ok); }
+  .cash-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .cash-quick button { flex: 1 1 22%; border: 1px solid var(--border); background: var(--surface-3); color: var(--text); border-radius: 11px; padding: 10px 6px; font-weight: 800; font-size: 13px; cursor: pointer; }
+  .cash-quick button:hover { border-color: var(--accent); }
+  .btn-confirm:disabled { background: var(--surface-3); color: var(--muted); box-shadow: none; cursor: not-allowed; }
+  .journal-meta { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .journal-actions { display: flex; flex-wrap: nowrap; gap: 8px; margin-top: 12px; }
+  .journal-action { flex: 1 1 0; min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 8px 0; font-size: 18px; line-height: 1.2; cursor: pointer; background: var(--surface-2); color: var(--text); }
+  .journal-action:hover { background: var(--surface-3); }
+  .journal-ticket { background: var(--accent-soft); color: var(--accent-2); border-color: rgba(255,106,43,.35); }
+  .journal-pay-reception { background: rgba(255,77,94,.15); color: var(--danger); border-color: rgba(255,77,94,.35); }
+  .journal-pickup { background: rgba(74,163,255,.15); color: var(--info); border-color: rgba(74,163,255,.35); }
+  .journal-pickup.done { background: rgba(47,210,122,.15); color: var(--ok); border-color: rgba(47,210,122,.35); }
+
+  /* IMPRESSION (ticket) : reste blanc/noir */
+  @media print {
+    body * { visibility: hidden !important; }
+    #printTicket, #printTicket * { visibility: visible !important; }
+    #printTicket { display: block !important; position: absolute; left: 0; top: 0; width: 80mm; padding: 8mm; font-family: Arial, sans-serif; color: #000; background: #fff; }
+  }
+  #printTicket { display: none; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (min-width: 560px) {
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .modal-bg { align-items: center; }
+    .modal { border-radius: 26px; border-bottom: 1px solid var(--border); max-width: 480px; }
+    .accounting-summary { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .acc-picked { grid-column: auto; }
+  }
+  @media (min-width: 900px) {
+    body { padding-right: var(--cart-w); }
+    header { padding: 14px 24px; }
+    .tabs { padding: 12px 24px; }
+    .products { padding: 22px 24px 40px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+    .journal, .settings { max-width: 980px; margin: 0 auto; }
+    .journal-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .journal-list .journal-order { margin-bottom: 0; }
+
+    /* panier = colonne fixe à droite, toujours ouverte */
+    .cart, .cart:not(.open) {
+      top: 0; right: 0; bottom: 0; left: auto;
+      width: var(--cart-w); min-width: 0; max-width: none;
+      border-radius: 0; border-width: 0 0 0 1px;
+      padding: calc(18px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; cursor: default;
+      background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none;
+      box-shadow: -20px 0 50px rgba(0,0,0,.35);
+    }
+    .cart:not(.open) .cart-items { display: block; }
+    .cart:not(.open) .cart-order-name { display: block; }
+    .cart:not(.open) .pay-btn { display: flex; }
+    .cart:not(.open) .cart-header { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .cart-handle { display: none !important; }
+    .cart-header { cursor: default; }
+    .cart-title { font-size: 18px; }
+    .cart-items, .cart:not(.open) .cart-items { flex: 1; max-height: none; }
+    .cart-title, .cart-total { font-size: 18px; }
+  }
+  @media (min-width: 1400px) {
+    :root { --cart-w: 430px; }
+  }
+  @media (max-width: 380px) {
+    .logo p { display: none; }
+    .header-journal-btn, .header-settings-btn { padding: 8px 10px; font-size: 11px; }
+    .payment-option { font-size: 11px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* v4 : accueil, carte de visite, ticket */
+  textarea { user-select: text; -webkit-user-select: text; font-family: inherit; color: var(--text); background: var(--surface-2); }
+  textarea:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft); }
+  .logo { cursor: pointer; }
+  .logo-icon { overflow: hidden; }
+  .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .header-home-btn { border: 1px solid rgba(255,106,43,.55); background: var(--accent-soft); color: var(--accent-2); border-radius: 12px; padding: 9px 12px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .header-home-btn:hover { background: rgba(255,106,43,.25); }
+  .card-img { height: 92px; font-size: inherit; padding: 6px; }
+  .card-img span { font-size: 17px; font-weight: 800; line-height: 1.2; text-align: center; letter-spacing: .2px; padding: 0 8px; }
+  .card-desc { min-height: 29px; }
+  .ticket-paper { background: #fff; color: #000; border-radius: 12px; padding: 18px 16px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; max-height: 55vh; overflow-y: auto; user-select: text; -webkit-user-select: text; }
+  .ticket-paper hr { border: 0; border-top: 1px dashed #999; margin: 10px 0; }
+  .bizcard { --card: #ff6a2b; border-radius: 22px; padding: 22px; position: relative; overflow: hidden;
+    background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--card) 45%, transparent), transparent 62%), linear-gradient(160deg, #1d2232, #0d1018);
+    border: 1px solid color-mix(in srgb, var(--card) 55%, #272e3d);
+    box-shadow: 0 16px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.03) inset; }
+  .bizcard-top { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .bizcard-logo { width: 62px; height: 62px; flex-shrink: 0; border-radius: 18px; display: grid; place-items: center; font-size: 32px; overflow: hidden;
+    background: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--card) 55%, #000)); box-shadow: 0 8px 22px color-mix(in srgb, var(--card) 40%, transparent); }
+  .bizcard-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .bizcard-name { font-size: 22px; font-weight: 900; letter-spacing: .6px; line-height: 1.15; }
+  .bizcard-tag { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .bizcard-lines { display: grid; gap: 10px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 14px; }
+  .bizcard-line { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.35; user-select: text; -webkit-user-select: text; }
+  .bizcard-line span:first-child { width: 22px; text-align: center; flex-shrink: 0; }
+  .bizcard-empty { color: var(--muted); font-size: 13px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 14px; }
+  .bizcard-note { margin-top: 16px; font-size: 13px; font-style: italic; color: var(--muted); border-left: 3px solid var(--card); padding-left: 10px; }
+  .card-form { display: grid; gap: 12px; }
+  .card-form label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); }
+  .card-form input:not([type=file]), .card-form textarea { width: 100%; margin-top: 5px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; resize: vertical; }
+  .card-form input[type=color] { height: 44px; padding: 4px; cursor: pointer; }
+  .card-logo-row { display: flex; align-items: center; gap: 14px; }
+  .card-logo-prev { width: 58px; height: 58px; border-radius: 16px; background: var(--surface-3); display: grid; place-items: center; font-size: 28px; object-fit: cover; flex-shrink: 0; overflow: hidden; }
+  .card-file-btn { background: var(--surface-3); cursor: pointer; display: inline-block; }
+  .dlg-text { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-top: 10px; font-size: 14px; user-select: text; -webkit-user-select: text; }
+  .btn-confirm.dlg-danger { background: linear-gradient(135deg, #ff4d5e, #d93a4a); box-shadow: 0 6px 18px rgba(255,77,94,.35); }
+  .mode-tag { color: var(--accent-2); font-weight: 700; }
+  @media (max-width: 899px) { .cart.empty { display: none; } }
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; row-gap: 10px; }
+    header > div:last-child { width: 100%; justify-content: flex-end; flex-wrap: nowrap; }
+    .mode-switch { margin-right: auto; }
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logoBtn" role="button" tabindex="0" title="Carte de visite">
+    <div class="logo-icon" id="logoIcon">🍔</div>
+    <div>
+      <h1 id="restaurantTitle">BURGER CO.</h1>
+      <p>CAISSE #01</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="mode-switch" id="modeSwitch">
+      <button class="mode-btn active" data-mode="menu">MENU</button>
+      <button class="mode-btn" data-mode="seul">SEUL</button>
+    </div>
+    <button type="button" id="homeBtn" class="header-home-btn" style="display:none">🏠 Accueil</button>
+    <button type="button" id="journalHeaderBtn" class="header-journal-btn">📋 Journal</button>
+    <button type="button" class="header-settings-btn" id="settingsHeaderBtn">⚙️ Réglages</button>
+  </div>
+</header>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-cat="burger">🍔 Burger</div>
+  <div class="tab" data-cat="wrap">🌯 Wrap</div>
+  <div class="tab" data-cat="side">🍟 Accompagnement</div>
+  <div class="tab" data-cat="drink">🥤 Boisson</div>
+</div>
+
+<div class="products" id="products"></div>
+
+<!-- PANIER -->
+<div class="cart" id="cart">
+  <div class="cart-handle"></div>
+  <div class="cart-header" id="cartHeader">
+    <div class="cart-title"><span id="cartTitleText">Commande</span> <span class="cart-count" id="cartCount">0</span></div>
+    <div class="cart-total" id="cartTotal">0,00 €</div>
+  </div>
+  <div class="cart-order-name">
+    <label for="cartOrderName">Nom de la commande</label>
+    <input id="cartOrderName" type="text" placeholder="Ex. Randy" maxlength="40" autocomplete="off">
+  </div>
+  <div class="cart-items" id="cartItems"><div class="empty-cart">Aucun article pour le moment</div></div>
+  <button type="button" class="cancel-edit-btn" id="cancelEditBtn" style="display:none">✕ Annuler la modification</button>
+  <button type="button" class="pay-btn" id="payBtn" disabled>
+    <span>💳 ENCAISSER</span>
+    <span id="payAmount">0,00 €</span>
+  </button>
+</div>
+
+<!-- MODAL SUPPLEMENTS -->
+<div class="modal-bg" id="suppModalBg">
+  <div class="modal"><div id="suppContent"></div></div>
+</div>
+
+<!-- MODAL PAIEMENT -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modal">
+    <div id="payForm">
+      <h2>Paiement</h2>
+      <div class="order-name-field">
+        <label for="orderName">Nom de la commande</label>
+        <input id="orderName" type="text" placeholder="Ex. Randy" maxlength="40" autocomplete="off">
+      </div>
+      <button type="button" class="quick-calc-btn" id="quickCalcBtn">🧮 Calcul rapide</button>
+      <p class="modal-sub">Choisissez le mode de règlement</p>
+      <div class="payment-options">
+        <button type="button" class="payment-option active" data-pay="card">💳 Carte</button>
+        <button type="button" class="payment-option" data-pay="cash">💵 Espèces</button>
+        <button type="button" class="payment-option" data-pay="reception">🏠 À la réception</button>
+      </div>
+      <div class="cash-payment-box" id="cashPaymentBox">
+        <div class="cash-payment-label">Montant remis</div>
+        <input id="cashReceived" class="cash-payment-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+        <div class="cash-quick" id="cashQuick"></div>
+        <div id="cashResult" class="cash-result">À remettre : 0,00 €</div>
+      </div>
+      <div class="summary" id="summary"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="cancelBtn">Annuler</button>
+        <button type="button" class="btn-confirm" id="confirmBtn">Valider</button>
+      </div>
+    </div>
+    <div id="paySuccess" style="display:none"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="ticketModalBg"><div class="modal"><div id="ticketContent"></div></div></div>
+<div class="modal-bg" id="cardModalBg"><div class="modal"><div id="cardContent"></div></div></div>
+
+<div class="modal-bg" id="dialogBg" style="z-index:15000"><div class="modal"><div id="dialogContent"></div></div></div>
+
+<div class="toast" id="toast"></div>
+<div id="printTicket"></div>
+
+<div class="mini-calculator-overlay" id="calculatorModal">
+  <div class="mini-calculator">
+    <div class="mini-calculator-title">🧮 Calculatrice</div>
+    <input id="calculatorDisplay" class="calculator-display" readonly value="">
+    <div class="calculator-grid">
+      <button data-calc="7">7</button><button data-calc="8">8</button><button data-calc="9">9</button><button data-calc="/">÷</button>
+      <button data-calc="4">4</button><button data-calc="5">5</button><button data-calc="6">6</button><button data-calc="*">×</button>
+      <button data-calc="1">1</button><button data-calc="2">2</button><button data-calc="3">3</button><button data-calc="-">−</button>
+      <button data-calc="0">0</button><button data-calc=".">.</button><button data-calc="C">C</button><button data-calc="+">+</button>
+      <button data-calc="=" class="calculator-equals">=</button>
+    </div>
+    <button type="button" id="closeCalculator" class="calculator-close">Fermer</button>
+  </div>
+</div>
+
+<script>
+const DEFAULT_PRODUCTS = [
+  { id:1, name:"Classic Burger", desc:"Bœuf, cheddar, salade, tomate", price:8.50, menuPrice:12.00, emoji:"🍔", cat:"burger" },
+  { id:2, name:"Cheese Bacon", desc:"Double cheddar, bacon croustillant", price:10.90, menuPrice:14.40, emoji:"🥓", cat:"burger" },
+  { id:3, name:"Chicken Burger", desc:"Poulet croustillant, sauce BBQ", price:9.50, menuPrice:13.00, emoji:"🍗", cat:"burger" },
+  { id:4, name:"Veggie Deluxe", desc:"Galette de légumes, avocat", price:9.90, menuPrice:13.40, emoji:"🥑", cat:"burger" },
+  { id:5, name:"Big Master", desc:"Triple steak, oignons, sauce maison", price:13.50, menuPrice:17.00, emoji:"👑", cat:"burger" },
+  { id:6, name:"Fish Burger", desc:"Cabillaud pané, tartare", price:9.90, menuPrice:13.40, emoji:"🐟", cat:"burger" },
+
+  { id:40, name:"Wrap Chicken", desc:"Poulet croustillant, salade, sauce maison", price:8.90, menuPrice:12.40, emoji:"🌯", cat:"wrap" },
+  { id:41, name:"Wrap Beef", desc:"Bœuf grillé, cheddar, oignons", price:9.50, menuPrice:13.00, emoji:"🌯", cat:"wrap" },
+  { id:42, name:"Wrap Veggie", desc:"Légumes grillés, avocat, sauce", price:8.50, menuPrice:12.00, emoji:"🌯", cat:"wrap" },
+
+  { id:10, name:"Frites", desc:"Frites maison croustillantes", price:3.50, emoji:"🍟", cat:"side" },
+  { id:11, name:"Onion Rings", desc:"6 anneaux panés", price:4.50, emoji:"🧅", cat:"side" },
+  { id:12, name:"Nuggets x6", desc:"Poulet pané, sauce au choix", price:5.50, emoji:"🍗", cat:"side" },
+  { id:13, name:"Salade César", desc:"Romaine, parmesan, croûtons", price:6.90, emoji:"🥗", cat:"side" },
+
+  { id:20, name:"Coca-Cola", desc:"33cl bien frais", price:2.80, emoji:"🥤", cat:"drink" },
+  { id:21, name:"Limonade", desc:"Faite maison, menthe", price:3.50, emoji:"🍋", cat:"drink" },
+  { id:22, name:"Bière pression", desc:"Pinte 50cl IPA", price:5.50, emoji:"🍺", cat:"drink" },
+  { id:23, name:"Milkshake", desc:"Vanille / Chocolat / Fraise", price:4.90, emoji:"🥛", cat:"drink" }
+];
+const DEFAULT_SUPPLEMENTS = [
+  { id:'cheddar', name:'Cheddar', price:1.00 },
+  { id:'bacon', name:'Bacon', price:1.50 },
+  { id:'oeuf', name:'Œuf', price:1.00 },
+  { id:'oignons', name:'Oignons frits', price:0.80 },
+  { id:'avocat', name:'Avocat', price:1.50 },
+  { id:'sauce', name:'Sauce supplémentaire', price:0.50 }
+];
+const CAT_LABELS = { burger:'🍔 Burgers', wrap:'🌯 Wraps', side:'🍟 Accompagnements', drink:'🥤 Boissons' };
+const PAY_LABELS = { card:'Carte', cash:'Espèces', reception:'Payer à la réception' };
+const RECEPTION = PAY_LABELS.reception;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const round2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+function fmt(n) { return Number(n || 0).toFixed(2).replace('.', ',') + ' €'; }
+function load(key, fallback) {
+  try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; }
+  catch { return fallback; }
+}
+function persist(key, value) {
+  try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); }
+  catch { showToast('Stockage plein ou indisponible'); }
+}
+
+const cart = new Map();   // key -> {key, product, qty, selectedPrice, supplements}
+let currentCat = 'burger';
+let orderMode = 'menu';
+let payMethod = 'card';
+let pendingProduct = null;
+let pendingSupps = [];
+let editingOrderIndex = null;
+
+let journal = load('burgerCoJournal', []);
+let settings = Object.assign({ restaurantName:'BURGER CO.', orderPrefix:'#' }, load('burgerCoSettings', {}));
+let PRODUCTS = load('burgerCoProducts', null) || DEFAULT_PRODUCTS;
+let SUPPLEMENTS = load('burgerCoSupplements', null) || DEFAULT_SUPPLEMENTS;
+let orderNumber = parseInt(localStorage.getItem('burgerCoOrderNumber') || '0', 10) || 0;
+
+function appDialog({ title = '', message = '', fields = [], text = null, buttons = [{ label: 'OK', value: true, cls: 'btn-confirm' }] }) {
+  return new Promise(resolve => {
+    const bg = $('dialogBg');
+    $('dialogContent').innerHTML = `
+      <h2>${esc(title)}</h2>
+      ${message ? `<p class="modal-sub" style="margin-top:6px">${esc(message)}</p>` : ''}
+      ${text !== null ? `<textarea id="dlgText" class="dlg-text" readonly rows="6">${esc(text)}</textarea>` : ''}
+      ${fields.map(f => `<div class="order-name-field" style="margin:10px 0"><label>${esc(f.label)}</label><input data-dlg="${esc(f.id)}" type="${f.type || 'text'}" ${f.step ? `step="${f.step}"` : ''} ${f.type === 'number' ? 'inputmode="decimal"' : ''} value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}"></div>`).join('')}
+      <div class="modal-actions" style="margin-top:14px">
+        ${buttons.map((b, i) => `<button type="button" class="${b.cls || 'btn-cancel'}" data-dlg-btn="${i}">${esc(b.label)}</button>`).join('')}
+      </div>`;
+    const done = v => { bg.classList.remove('show'); bg.onclick = null; resolve(v); };
+    bg.onclick = e => {
+      if (e.target === bg) return done(null);
+      const btn = e.target.closest('[data-dlg-btn]'); if (!btn) return;
+      const b = buttons[Number(btn.dataset.dlgBtn)];
+      if (fields.length && b.value === true) {
+        const out = {};
+        bg.querySelectorAll('[data-dlg]').forEach(inp => { out[inp.dataset.dlg] = inp.value; });
+        return done(out);
+      }
+      done(b.value);
+    };
+    bg.classList.add('show');
+    setTimeout(() => {
+      const f = bg.querySelector('[data-dlg]') || $('dlgText');
+      if (f) { f.focus(); if (f.id === 'dlgText') f.select(); }
+    }, 60);
+  });
+}
+const appConfirm = (title, message, okText = 'Confirmer', danger = false) => appDialog({
+  title, message,
+  buttons: [{ label: 'Annuler', value: false }, { label: okText, value: true, cls: danger ? 'btn-confirm dlg-danger' : 'btn-confirm' }]
+}).then(v => v === true);
+
+const modeName = m => m === 'menu' ? 'Menu' : m === 'seul' ? 'Seul' : '';
+const modeTag = m => modeName(m) ? ` (${modeName(m)})` : '';
+
+const saveJournal = () => persist('burgerCoJournal', journal);
+const saveProducts = () => persist('burgerCoProducts', PRODUCTS);
+const saveSupplements = () => persist('burgerCoSupplements', SUPPLEMENTS);
+const fmtNum = n => (settings.orderPrefix || '#') + String(n).padStart(4, '0');
+
+const CARD_DEFAULT = { logoEmoji:'🍔', logo:'', tagline:'Burgers & wraps maison', phone:'', address:'', hours:'', email:'', social:'', note:'', color:'#ff6a2b' };
+const getCard = () => Object.assign({}, CARD_DEFAULT, settings.card || {});
+const safeColor = c => /^#[0-9a-f]{6}$/i.test(c || '') ? c : CARD_DEFAULT.color;
+
+function applySettings() {
+  $('restaurantTitle').textContent = settings.restaurantName || 'BURGER CO.';
+  const c = getCard();
+  $('logoIcon').innerHTML = c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(c.logoEmoji);
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  const hd = document.querySelector('header');
+  t.style.top = ((hd ? hd.getBoundingClientRect().bottom : 0) + 10) + 'px';
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ---------- PANIER ---------- */
+const cartItems = () => [...cart.values()];
+const cartTotal = () => round2(cartItems().reduce((s, i) => s + i.qty * i.selectedPrice, 0));
+const cartKey = (p, supps, mode = '') => String(p.id) + '|' + supps.map(s => String(s.id)).sort().join(',') + '|' + mode;
+
+function addProductToCart(p, supplements = []) {
+  if (!p) return;
+  const mode = (p.cat === 'burger' || p.cat === 'wrap') ? orderMode : '';
+  const base = Number(mode === 'menu' && p.menuPrice != null ? p.menuPrice : p.price) || 0;
+  const supps = Array.isArray(supplements) ? supplements : [];
+  const finalPrice = round2(base + supps.reduce((s, x) => s + (Number(x.price) || 0), 0));
+  const key = cartKey(p, supps, mode);
+  const existing = cart.get(key);
+  if (existing) existing.qty += 1;
+  else cart.set(key, { key, product: p, mode, qty: 1, selectedPrice: finalPrice, supplements: supps });
+  renderCart();
+  $('cart').classList.add('open');
+  showToast(p.name + ' ajouté');
+}
+
+function changeQty(key, delta) {
+  const item = cart.get(key);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart.delete(key);
+  renderCart();
+}
+
+function subLine(i) {
+  const parts = [];
+  if (i.mode) parts.push(`<span class="mode-tag">${modeName(i.mode)}</span>`);
+  if (i.supplements.length) parts.push('+ ' + esc(i.supplements.map(s => s.name).join(', ')));
+  return parts.length ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">${parts.join(' · ')}</div>` : '';
+}
+
+function renderCart() {
+  const items = cartItems();
+  const count = items.reduce((s, i) => s + i.qty, 0);
+  const total = cartTotal();
+  $('cartCount').textContent = count;
+  $('cartTotal').textContent = fmt(total);
+  $('payAmount').textContent = fmt(total);
+  $('payBtn').disabled = count === 0;
+  $('cart').classList.toggle('empty', count === 0 && editingOrderIndex === null);
+  $('cartTitleText').textContent = editingOrderIndex !== null && journal[editingOrderIndex]
+    ? 'Modif. ' + fmtNum(journal[editingOrderIndex].number) : 'Commande';
+  $('cancelEditBtn').style.display = editingOrderIndex !== null ? 'block' : 'none';
+
+  if (!items.length) {
+    $('cartItems').innerHTML = '<div class="empty-cart">Aucun article pour le moment</div>';
+    return;
+  }
+  $('cartItems').innerHTML = items.map(i => `
+    <div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${esc(i.product.name)}${subLine(i)}</div>
+        <div class="cart-item-price">${fmt(i.selectedPrice)} × ${i.qty} = <b>${fmt(i.selectedPrice * i.qty)}</b></div>
+      </div>
+      <div class="qty-ctrl">
+        <button type="button" class="qty-btn minus" data-key="${esc(i.key)}" data-d="-1">−</button>
+        <span class="qty-val">${i.qty}</span>
+        <button type="button" class="qty-btn plus" data-key="${esc(i.key)}" data-d="1">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function resetOrderState() {
+  cart.clear();
+  editingOrderIndex = null;
+  $('cartOrderName').value = '';
+  $('orderName').value = '';
+  renderCart();
+}
+
+/* ---------- PRODUITS ---------- */
+function updateChrome() {
+  const sub = currentCat === 'journal' || currentCat === 'settings';
+  $('tabs').style.display = sub ? 'none' : '';
+  $('homeBtn').style.display = sub ? '' : 'none';
+}
+
+function renderProducts() {
+  updateChrome();
+  if (currentCat === 'journal') { $('modeSwitch').classList.remove('show'); renderJournal(); return; }
+  if (currentCat === 'settings') { $('modeSwitch').classList.remove('show'); renderSettings(); return; }
+
+  $('modeSwitch').classList.toggle('show', currentCat === 'burger' || currentCat === 'wrap');
+  const list = PRODUCTS.filter(p => p.cat === currentCat);
+  if (!list.length) {
+    $('products').innerHTML = '<div class="journal-empty">Aucun produit dans cette catégorie.</div>';
+    return;
+  }
+  $('products').innerHTML = `<div class="category-title">${CAT_LABELS[currentCat] || esc(currentCat)}</div><div class="grid">` +
+    list.map(p => {
+      const price = (orderMode === 'menu' && p.menuPrice != null) ? p.menuPrice : p.price;
+      return `
+        <div class="card" data-id="${esc(p.id)}">
+          <div class="card-img"><span>${esc(p.name)}</span></div>
+          <div class="card-desc">${esc(p.desc)}</div>
+          <div class="card-bottom">
+            <div class="card-price">${fmt(price)}</div>
+            <button type="button" class="add-btn" data-id="${esc(p.id)}">+</button>
+          </div>
+        </div>`;
+    }).join('') + '</div>';
+}
+
+/* ---------- SUPPLÉMENTS (modal) ---------- */
+function renderSuppAsk() {
+  $('suppContent').innerHTML = `
+    <h2>Suppléments</h2>
+    <p class="modal-sub">${esc(pendingProduct ? pendingProduct.name : '')} — souhaitez-vous ajouter des suppléments ?</p>
+    <div class="supp-options">
+      <button type="button" class="supp-option" data-act="no">NON</button>
+      <button type="button" class="supp-option" data-act="yes">OUI</button>
+    </div>
+    <button type="button" class="btn-cancel" data-act="cancel" style="width:100%">Annuler</button>`;
+}
+
+function renderSuppList() {
+  const sum = pendingSupps.reduce((s, x) => s + x.price, 0);
+  $('suppContent').innerHTML = `
+    <h2>Suppléments</h2>
+    <p class="modal-sub">${esc(pendingProduct.name)} — touchez pour choisir (plusieurs possibles)</p>
+    <div class="supp-list">
+      ${SUPPLEMENTS.map(s => `
+        <button type="button" class="supp-add ${pendingSupps.some(x => x.id === s.id) ? 'active' : ''}" data-supp="${esc(s.id)}">
+          <span>${esc(s.name)}</span><b>+${fmt(s.price)}</b>
+        </button>`).join('') || '<div class="journal-empty">Aucun supplément disponible.</div>'}
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" data-act="cancel">Annuler</button>
+      <button type="button" class="btn-confirm" data-act="ok">Ajouter${pendingSupps.length ? ' (+' + fmt(sum) + ')' : ''}</button>
+    </div>`;
+}
+
+function openSuppModal(product) {
+  pendingProduct = product;
+  pendingSupps = [];
+  renderSuppAsk();
+  $('suppModalBg').classList.add('show');
+}
+
+function closeSuppModal() {
+  $('suppModalBg').classList.remove('show');
+  pendingProduct = null;
+  pendingSupps = [];
+}
+
+/* ---------- PAIEMENT ---------- */
+function updateCashResult() {
+  const total = cartTotal();
+  const received = Number(String($('cashReceived').value || '').replace(',', '.')) || 0;
+  const diff = round2(received - total);
+  const r = $('cashResult');
+  if (!received) { r.className = 'cash-result'; r.textContent = 'À remettre : 0,00 €'; }
+  else if (diff >= 0) { r.className = 'cash-result change'; r.textContent = 'À remettre : ' + fmt(diff); }
+  else { r.className = 'cash-result missing'; r.textContent = 'Il manque : ' + fmt(-diff); }
+}
+
+function renderCashQuick() {
+  const exact = cartTotal();
+  const amounts = [exact, 10, 20, 50];
+  $('cashQuick').innerHTML = amounts.map((v, i) => `<button type="button" data-cash-amt="${v}">${i === 0 ? 'Exact' : fmt(v)}</button>`).join('');
+}
+
+function setPayMethod(m) {
+  payMethod = m;
+  document.querySelectorAll('.payment-option').forEach(b => b.classList.toggle('active', b.dataset.pay === m));
+  $('cashPaymentBox').classList.toggle('show', m === 'cash');
+  if (m === 'cash') renderCashQuick();
+  updateCashResult();
+}
+
+function openModal() {
+  if (!cart.size) return;
+  $('payForm').style.display = '';
+  $('paySuccess').style.display = 'none';
+  $('orderName').value = $('cartOrderName').value;
+  $('cashReceived').value = '';
+  setPayMethod('card');
+  $('summary').innerHTML = cartItems().map(i => `
+    <div class="summary-row"><span>${i.qty}× ${esc(i.product.name)}${i.supplements.length ? ' (+' + esc(i.supplements.map(s => s.name).join(', ')) + ')' : ''}</span><span>${fmt(i.qty * i.selectedPrice)}</span></div>
+  `).join('') + `<div class="summary-row total"><span>TOTAL</span><span>${fmt(cartTotal())}</span></div>`;
+  $('modalBg').classList.add('show');
+}
+
+function closeModal() { $('modalBg').classList.remove('show'); }
+
+function saveJournalOrder(paymentLabel, number) {
+  const items = cartItems().map(i => ({
+    productId: i.product.id,
+    name: i.product.name,
+    qty: i.qty,
+    price: i.selectedPrice,
+    mode: i.mode || '',
+    supplements: i.supplements.map(s => s.name)
+  }));
+  const order = {
+    number,
+    name: ($('orderName').value || $('cartOrderName').value || '').trim(),
+    date: new Date().toLocaleString('fr-FR'),
+    payment: paymentLabel,
+    pickedUp: false,
+    total: cartTotal(),
+    items
+  };
+  if (payMethod === 'cash') {
+    const rcv = Number(String($('cashReceived').value || '').replace(',', '.')) || 0;
+    if (rcv >= order.total) { order.cashReceived = round2(rcv); order.change = round2(rcv - order.total); }
+  }
+  if (editingOrderIndex !== null && journal[editingOrderIndex]) {
+    const old = journal[editingOrderIndex];
+    order.date = old.date;
+    order.pickedUp = !!old.pickedUp;
+    order.edited = new Date().toLocaleString('fr-FR');
+    journal[editingOrderIndex] = order;
+  } else {
+    journal.unshift(order);
+  }
+  saveJournal();
+  return order;
+}
+
+function confirmPay() {
+  if (!cart.size) return;
+  const total = cartTotal();
+  if (payMethod === 'cash') {
+    const received = Number(String($('cashReceived').value || '').replace(',', '.')) || 0;
+    if (received < total) { showToast('Montant insuffisant'); return; }
+  }
+  const editing = editingOrderIndex !== null && !!journal[editingOrderIndex];
+  const number = editing ? journal[editingOrderIndex].number : orderNumber + 1;
+  if (!editing) { orderNumber = number; persist('burgerCoOrderNumber', String(orderNumber)); }
+  const order = saveJournalOrder(PAY_LABELS[payMethod], number);
+  const isReception = payMethod === 'reception';
+
+  $('payForm').style.display = 'none';
+  $('paySuccess').style.display = '';
+  $('paySuccess').innerHTML = `
+    <div class="success">
+      <div class="success-icon">✓</div>
+      <h2>${isReception ? 'Commande enregistrée' : 'Paiement enregistré'}</h2>
+      <p>${isReception ? 'Payer à la réception' : esc(order.payment)}</p>
+      <p style="margin-top:10px;font-size:20px;font-weight:800;color:var(--text)">${fmt(order.total)}</p>
+      <p style="margin-top:10px">N° commande : ${esc(fmtNum(number))}</p>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button type="button" class="btn-cancel" data-act="new">Nouvelle commande</button>
+      <button type="button" class="btn-confirm" data-act="journal">Voir le journal</button>
+    </div>`;
+  resetOrderState();
+}
+
+/* ---------- CALCULATRICE ---------- */
+function evalExpr(raw) {
+  const expr = String(raw).replace(/,/g, '.').replace(/\s/g, '');
+  if (!expr || !/^[0-9+\-*/().]+$/.test(expr)) throw new Error('bad');
+  const tokens = expr.match(/\d+(?:\.\d*)?|\.\d+|[+\-*/()]/g) || [];
+  if (tokens.join('') !== expr) throw new Error('bad');
+  const values = [], ops = [];
+  const prec = { '+':1, '-':1, '*':2, '/':2 };
+  const apply = () => {
+    const op = ops.pop(), b = values.pop(), a = values.pop();
+    if (a === undefined || b === undefined) throw new Error('bad');
+    if (op === '+') values.push(a + b);
+    else if (op === '-') values.push(a - b);
+    else if (op === '*') values.push(a * b);
+    else { if (b === 0) throw new Error('div0'); values.push(a / b); }
+  };
+  let expectValue = true;
+  for (const t of tokens) {
+    if (/^[\d.]/.test(t)) { values.push(Number(t)); expectValue = false; }
+    else if (t === '(') { ops.push(t); expectValue = true; }
+    else if (t === ')') {
+      while (ops.length && ops[ops.length - 1] !== '(') apply();
+      if (ops.pop() !== '(') throw new Error('bad');
+      expectValue = false;
+    } else {
+      if (expectValue) { if (t === '-') values.push(0); else throw new Error('bad'); }
+      while (ops.length && ops[ops.length - 1] !== '(' && prec[ops[ops.length - 1]] >= prec[t]) apply();
+      ops.push(t);
+      expectValue = true;
+    }
+  }
+  while (ops.length) { if (ops[ops.length - 1] === '(') throw new Error('bad'); apply(); }
+  if (values.length !== 1 || !Number.isFinite(values[0])) throw new Error('bad');
+  return round2(values[0]);
+}
+
+function openCalculator() {
+  const d = $('calculatorDisplay');
+  d.value = '';
+  $('calculatorModal').classList.add('show');
+}
+function closeCalculator() { $('calculatorModal').classList.remove('show'); }
+
+function calcKey(key) {
+  const d = $('calculatorDisplay');
+  let expr = d.value;
+  if (expr === 'Erreur') expr = '';
+  if (key === 'C') expr = '';
+  else if (key === '=') {
+    try { expr = String(evalExpr(expr)); } catch { expr = 'Erreur'; }
+  } else expr += key;
+  d.value = expr;
+}
+
+/* ---------- JOURNAL ---------- */
+function getAccountingSummary() {
+  const paidOrders = journal.filter(o => o.payment !== RECEPTION);
+  const pendingOrders = journal.filter(o => o.payment === RECEPTION);
+  const sum = list => round2(list.reduce((s, o) => s + Number(o.total || 0), 0));
+  return {
+    totalOrders: journal.length,
+    totalRevenue: sum(journal),
+    paidOrders, pendingOrders,
+    paidRevenue: sum(paidOrders),
+    pendingRevenue: sum(pendingOrders),
+    cashOrders: journal.filter(o => o.payment === PAY_LABELS.cash).length,
+    cardOrders: journal.filter(o => o.payment === PAY_LABELS.card).length,
+    cashRevenue: sum(journal.filter(o => o.payment === PAY_LABELS.cash)),
+    cardRevenue: sum(journal.filter(o => o.payment === PAY_LABELS.card)),
+    pickedUp: journal.filter(o => o.pickedUp).length
+  };
+}
+
+function renderAccountingSummary() {
+  const s = getAccountingSummary();
+  const plural = n => `${n} commande${n > 1 ? 's' : ''}`;
+  return `
+    <div class="accounting-summary">
+      <div class="accounting-card acc-paid"><div class="accounting-card-head"><span class="accounting-card-label">Encaissé</span><span class="acc-count">${plural(s.paidOrders.length)}</span></div><div class="accounting-card-value">${fmt(s.paidRevenue)}</div></div>
+      <div class="accounting-card acc-pending"><div class="accounting-card-head"><span class="accounting-card-label">À régler</span><span class="acc-count">${plural(s.pendingOrders.length)}</span></div><div class="accounting-card-value">${fmt(s.pendingRevenue)}</div></div>
+      <div class="accounting-card acc-picked"><div class="accounting-card-label">Récupérées</div><div class="accounting-card-value">${s.pickedUp}</div><div class="accounting-card-sub">sur ${plural(s.totalOrders)}</div></div>
+    </div>`;
+}
+
+function buildAccountingText() {
+  const s = getAccountingSummary();
+  return [
+    `${settings.restaurantName} — RÉSUMÉ COMPTABLE`, '',
+    `Encaissé : ${fmt(s.paidRevenue)} (${s.paidOrders.length} commande${s.paidOrders.length > 1 ? 's' : ''})`,
+    `À régler : ${fmt(s.pendingRevenue)} (${s.pendingOrders.length} commande${s.pendingOrders.length > 1 ? 's' : ''})`,
+    `Commandes : ${s.totalOrders}`,
+    `Commandes récupérées : ${s.pickedUp}`,
+    '', '— DÉTAIL DES COMMANDES —',
+    ...journal.slice().reverse().map(o => {
+      const status = o.payment === RECEPTION ? 'À RÉGLER' : 'PAYÉ';
+      return '\n' + [
+        `${fmtNum(o.number)}${o.name ? ' · ' + o.name : ''} — ${status}${o.pickedUp ? ' · récupérée' : ''}`,
+        o.date || '',
+        ...(o.items || []).map(it => `  ${it.qty} × ${it.name}${modeTag(it.mode)}${(it.supplements || []).length ? ' + ' + it.supplements.join(', ') : ''} — ${fmt(it.price * it.qty)}`),
+        `  Total : ${fmt(o.total)}`
+      ].filter(Boolean).join('\n');
+    })
+  ].join('\n');
+}
+
+function copyText(text) {
+  // 1) API moderne (HTTPS)  2) repli execCommand, compatible iOS en contexte non sécurisé
+  const legacy = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+    let okc = false;
+    try { okc = document.execCommand('copy'); } catch {}
+    ta.remove();
+    return okc;
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(() => true, () => legacy());
+  }
+  return Promise.resolve(legacy());
+}
+
+function showShareFallback(title, text, copiedMsg, reason) {
+  const bg = $('dialogBg');
+  const canShare = typeof navigator.share === 'function';
+  const hint = reason === 'unsupported'
+    ? 'La feuille de partage de l’iPhone n’est pas disponible dans ce mode d’ouverture de la page (elle demande une page en https ou ajoutée à l’écran d’accueil). Vous pouvez copier le texte.'
+    : 'Le partage n’a pas pu s’ouvrir. Appuyez sur « Partager » pour réessayer, ou copiez le texte.';
+  $('dialogContent').innerHTML = `
+    <h2>📤 Partager</h2>
+    <p class="modal-sub" style="margin-top:6px">${esc(hint)}</p>
+    <textarea class="dlg-text" readonly rows="6">${esc(text)}</textarea>
+    <div class="modal-actions" style="margin-top:14px">
+      <button type="button" class="btn-cancel" data-sh="close">Fermer</button>
+      <button type="button" class="${canShare ? 'btn-cancel' : 'btn-confirm'}" data-sh="copy">Copier</button>
+      ${canShare ? '<button type="button" class="btn-confirm" data-sh="share">Partager</button>' : ''}
+    </div>`;
+  bg.onclick = e => {
+    if (e.target === bg) { bg.classList.remove('show'); bg.onclick = null; return; }
+    const b = e.target.closest('[data-sh]'); if (!b) return;
+    const act = b.dataset.sh;
+    if (act === 'close') { bg.classList.remove('show'); bg.onclick = null; }
+    else if (act === 'share') {
+      // appel direct dans le geste de l'utilisateur
+      navigator.share({ title, text }).then(() => { bg.classList.remove('show'); bg.onclick = null; }, err => {
+        if (!err || err.name !== 'AbortError') showToast('Partage indisponible, utilisez Copier');
+      });
+    } else if (act === 'copy') {
+      copyText(text).then(okc => showToast(okc ? copiedMsg : 'Copie impossible, sélectionnez le texte'));
+    }
+  };
+  bg.classList.add('show');
+}
+
+// IMPORTANT : navigator.share doit être appelé synchronement dans le clic (exigence iOS/Safari).
+function shareText(title, text, copiedMsg) {
+  if (typeof navigator.share !== 'function') { showShareFallback(title, text, copiedMsg, 'unsupported'); return; }
+  navigator.share({ title, text }).catch(err => {
+    if (err && err.name === 'AbortError') return;
+    showShareFallback(title, text, copiedMsg, 'failed');
+  });
+}
+
+function renderJournal() {
+  const products = $('products');
+  if (!journal.length) {
+    products.innerHTML = `
+      <div class="journal">
+        <div class="journal-header"><div class="journal-title">📋 Journal</div><div class="journal-count">0 commande</div></div>
+        <div class="journal-empty">Aucune commande enregistrée.</div>
+      </div>`;
+    return;
+  }
+  products.innerHTML = `
+    <div class="journal">
+      ${renderAccountingSummary()}
+      <div class="journal-main-actions">
+        <button type="button" class="journal-main-action journal-share" data-jact="share-accounting">📤 Partager le résumé</button>
+      </div>
+      <div class="journal-header">
+        <div class="journal-title">📋 Journal</div>
+        <div class="journal-count">${journal.length} commande${journal.length > 1 ? 's' : ''}</div>
+      </div>
+      <div class="journal-list">${journal.map((order, idx) => {
+        const pending = order.payment === RECEPTION;
+        return `
+        <div class="journal-order ${pending ? 'is-pending' : 'is-paid'} ${order.pickedUp ? 'picked-up' : ''}">
+          <div class="journal-order-top">
+            <div class="journal-number">Commande ${esc(fmtNum(order.number))}${order.name ? ` · ${esc(order.name)}` : ''}</div>
+            <div class="journal-top-right">
+              <div class="journal-status ${pending ? 'reception' : 'paid'}">${pending ? 'À RÉGLER' : 'PAYÉ'}</div>
+              <button type="button" class="journal-delete" data-jact="delete" data-i="${idx}" title="Supprimer la commande" aria-label="Supprimer la commande">✕</button>
+            </div>
+          </div>
+          ${order.items.map(item => `
+            <div class="journal-item">
+              <span>${item.qty}× ${esc(item.name)}${esc(modeTag(item.mode))}${(item.supplements || []).length ? ` + ${esc(item.supplements.join(', '))}` : ''}</span>
+              <span>${fmt(item.qty * item.price)}</span>
+            </div>`).join('')}
+          <div class="journal-total"><small>TOTAL</small><strong>${fmt(order.total)}</strong></div>
+          <div class="journal-meta">${esc(order.date)} · ${esc(order.payment)}${order.edited ? ' · modifiée' : ''}</div>
+          ${order.cashReceived != null ? `<div class="journal-cash"><span>💵 Remis <b>${fmt(order.cashReceived)}</b></span><span>Total <b>− ${fmt(order.total)}</b></span><span>Rendu <b>${fmt(order.change || 0)}</b></span></div>` : ''}
+          <div class="journal-actions">
+            <button type="button" class="journal-action journal-ticket" data-jact="ticket" data-i="${idx}" title="Ticket" aria-label="Ticket">🧾</button>
+            <button type="button" class="journal-action journal-edit" data-jact="edit" data-i="${idx}" title="Modifier" aria-label="Modifier">✏️</button>
+            ${pending ? `<button type="button" class="journal-action journal-pay-reception" data-jact="pay" data-i="${idx}" title="Payer" aria-label="Payer">💳</button>` : ''}
+            <button type="button" class="journal-action journal-pickup ${order.pickedUp ? 'done' : ''}" data-jact="pickup" data-i="${idx}" title="${order.pickedUp ? 'Récupérée' : 'Marquer comme récupérée'}" aria-label="Récupérée">🛍️</button>
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+}
+
+async function deleteOrder(i) {
+  const o = journal[i]; if (!o) return;
+  const ok = await appConfirm('Supprimer la commande', `Commande ${fmtNum(o.number)}${o.name ? ' · ' + o.name : ''} — ${fmt(o.total)}. Cette action est irréversible.`, 'Supprimer', true);
+  if (!ok) return;
+  const idx = journal.indexOf(o); if (idx < 0) return;
+  journal.splice(idx, 1);
+  if (editingOrderIndex === idx) resetOrderState();
+  else if (editingOrderIndex !== null && editingOrderIndex > idx) editingOrderIndex--;
+  saveJournal(); renderJournal(); renderCart();
+  showToast(`Commande ${fmtNum(o.number)} supprimée`);
+}
+
+function markOrderPickedUp(i) {
+  const o = journal[i]; if (!o) return;
+  o.pickedUp = !o.pickedUp;
+  saveJournal(); renderJournal();
+  showToast(o.pickedUp ? `Commande ${fmtNum(o.number)} récupérée` : `Commande ${fmtNum(o.number)} remise en attente`);
+}
+
+function cashLines(o) {
+  if (!o || o.cashReceived == null) return '';
+  return `Remis : ${fmt(o.cashReceived)} · Rendu : ${fmt(o.change || 0)}`;
+}
+
+function cashStepDialog(o) {
+  return new Promise(resolve => {
+    const bg = $('dialogBg');
+    $('dialogContent').innerHTML = `
+      <h2>💵 Paiement en espèces</h2>
+      <p class="modal-sub" style="margin-top:6px">Commande ${esc(fmtNum(o.number))}${o.name ? ' · ' + esc(o.name) : ''}</p>
+      <div class="summary" style="margin-bottom:12px">
+        <div class="summary-row total" style="border-top:none;margin-top:0;padding-top:0"><span>À payer</span><span>${fmt(o.total)}</span></div>
+      </div>
+      <div class="cash-payment-label">Montant remis</div>
+      <input id="rcvCash" class="cash-payment-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+      <div class="cash-quick" id="rcvQuick"></div>
+      <div id="rcvResult" class="cash-result">Monnaie à rendre : 0,00 €</div>
+      <div class="summary" id="rcvDetail" style="margin:12px 0 0;display:none">
+        <div class="summary-row"><span>Total</span><span>${fmt(o.total)}</span></div>
+        <div class="summary-row"><span>Remis</span><span id="rcvGiven"></span></div>
+        <div class="summary-row total"><span id="rcvLbl">À rendre</span><span id="rcvDiff"></span></div>
+      </div>
+      <div class="modal-actions" style="margin-top:14px">
+        <button type="button" class="btn-cancel" data-rcv="cancel">Annuler</button>
+        <button type="button" class="btn-confirm" data-rcv="ok" id="rcvOk">Valider</button>
+      </div>`;
+    const inp = $('rcvCash');
+    const exact = round2(o.total);
+    const quick = [exact, 10, 20, 50];
+    $('rcvQuick').innerHTML = quick.map((v, i) => `<button type="button" data-rcv-amt="${v}">${i === 0 ? 'Exact' : fmt(v)}</button>`).join('');
+    const val = () => Number(String(inp.value || '').replace(',', '.')) || 0;
+    const update = () => {
+      const received = val(), diff = round2(received - o.total), r = $('rcvResult'), d = $('rcvDetail');
+      d.style.display = received ? '' : 'none';
+      $('rcvGiven').textContent = fmt(received);
+      if (!received) { r.className = 'cash-result'; r.textContent = 'Monnaie à rendre : 0,00 €'; }
+      else if (diff >= 0) { r.className = 'cash-result change'; r.textContent = 'Monnaie à rendre : ' + fmt(diff); $('rcvLbl').textContent = 'Monnaie à rendre'; $('rcvDiff').textContent = fmt(diff); }
+      else { r.className = 'cash-result missing'; r.textContent = 'Il manque : ' + fmt(-diff); $('rcvLbl').textContent = 'Il manque'; $('rcvDiff').textContent = fmt(-diff); }
+      $('rcvOk').disabled = received < o.total;
+    };
+    const done = v => { bg.classList.remove('show'); bg.onclick = null; resolve(v); };
+    inp.addEventListener('input', update);
+    update();
+    bg.onclick = e => {
+      if (e.target === bg) return done(null);
+      const q = e.target.closest('[data-rcv-amt]');
+      if (q) { inp.value = q.dataset.rcvAmt; update(); return; }
+      const b = e.target.closest('[data-rcv]'); if (!b) return;
+      if (b.dataset.rcv === 'cancel') return done(null);
+      const received = val();
+      if (received < o.total) return;
+      done({ received: round2(received), change: round2(received - o.total) });
+    };
+    bg.classList.add('show');
+    setTimeout(() => inp.focus(), 60);
+  });
+}
+
+async function payReceptionOrder(i) {
+  const o = journal[i];
+  if (!o || o.payment !== RECEPTION) return;
+  const r = await appDialog({
+    title: 'Règlement', message: `Commande ${fmtNum(o.number)} — ${fmt(o.total)}`,
+    buttons: [{ label: 'Annuler', value: null }, { label: '💳 Carte', value: 'card', cls: 'btn-confirm' }, { label: '💵 Espèces', value: 'cash', cls: 'btn-confirm' }]
+  });
+  if (!r || journal[i] !== o) return;
+  if (r === 'cash') {
+    const c = await cashStepDialog(o);
+    if (!c || journal[i] !== o) return;
+    o.cashReceived = c.received;
+    o.change = c.change;
+  }
+  o.payment = PAY_LABELS[r];
+  saveJournal(); renderJournal();
+  showToast(r === 'cash' ? `Commande ${fmtNum(o.number)} payée · à rendre ${fmt(o.change)}` : `Commande ${fmtNum(o.number)} payée`);
+}
+
+function orderText(o) {
+  return [
+    settings.restaurantName,
+    `Commande ${fmtNum(o.number)}`,
+    o.name ? `Nom : ${o.name}` : '',
+    o.date || '', '',
+    ...(o.items || []).map(it => `${it.qty} × ${it.name}${modeTag(it.mode)}${(it.supplements || []).length ? ' + ' + it.supplements.join(', ') : ''} — ${fmt(it.price * it.qty)}`),
+    '', `TOTAL : ${fmt(o.total)}`, `Paiement : ${o.payment || ''}`, o.cashReceived != null ? cashLines(o) : ''
+  ].filter((l, idx) => l !== '' || idx > 0).join('\n');
+}
+
+function ticketHTML(o) {
+  return `
+    <div style="text-align:center;font-weight:800;font-size:18px">${esc(settings.restaurantName)}</div>
+    <div style="text-align:center;margin:4px 0 12px;font-size:12px;letter-spacing:1px">TICKET DE COMMANDE</div>
+    <div>Commande : ${esc(fmtNum(o.number))}</div>
+    ${o.name ? `<div>Nom : ${esc(o.name)}</div>` : ''}
+    <div>${esc(o.date)}</div>
+    <hr>
+    ${o.items.map(it => `
+      <div style="margin:7px 0">
+        <div><b>${it.qty} × ${esc(it.name)}${esc(modeTag(it.mode))}</b></div>
+        ${(it.supplements || []).length ? `<div style="font-size:12px">+ ${esc(it.supplements.join(', '))}</div>` : ''}
+        <div style="text-align:right">${fmt(it.qty * it.price)}</div>
+      </div>`).join('')}
+    <hr>
+    <div style="display:flex;justify-content:space-between;font-weight:800"><span>TOTAL</span><span>${fmt(o.total)}</span></div>
+    <div style="margin-top:10px">Paiement : ${esc(o.payment)}</div>
+    ${o.cashReceived != null ? `<div>Remis : ${fmt(o.cashReceived)}</div><div><b>Rendu : ${fmt(o.change || 0)}</b></div>` : ''}`;
+}
+
+let ticketIndex = null;
+function openTicket(i) {
+  const o = journal[i]; if (!o) return;
+  ticketIndex = i;
+  $('ticketContent').innerHTML = `
+    <h2 style="margin-bottom:12px">🧾 Ticket</h2>
+    <div class="ticket-paper">${ticketHTML(o)}</div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button type="button" class="btn-cancel" data-act="close">Fermer</button>
+      <button type="button" class="btn-cancel" data-act="share">Partager</button>
+      <button type="button" class="btn-confirm" data-act="print">Imprimer</button>
+    </div>`;
+  $('ticketModalBg').classList.add('show');
+}
+function printTicketNow() {
+  const o = journal[ticketIndex]; if (!o) return;
+  $('printTicket').innerHTML = ticketHTML(o);
+  try { window.print(); } catch { showToast('Impression indisponible sur cet appareil'); }
+}
+
+async function editOrder(i) {
+  const o = journal[i]; if (!o) return;
+  if (cart.size && editingOrderIndex === null && !(await appConfirm('Modifier cette commande', 'La commande en cours sera remplacée.', 'Remplacer'))) return;
+  cart.clear();
+  o.items.forEach(item => {
+    const product = PRODUCTS.find(p => String(p.id) === String(item.productId))
+      || PRODUCTS.find(p => p.name === item.name)
+      || { id: 'old_' + item.name, name: item.name, emoji: '🍽️', desc: '', price: item.price, cat: 'side' };
+    const supplements = (item.supplements || []).map(n =>
+      SUPPLEMENTS.find(s => s.name === n) || { id: 'old_' + n, name: n, price: 0 });
+    const mode = item.mode || '';
+    const key = cartKey(product, supplements, mode);
+    // item.price contient déjà base + suppléments au moment de la vente
+    cart.set(key, { key, product, mode, qty: item.qty, selectedPrice: item.price, supplements });
+  });
+  editingOrderIndex = i;
+  $('cartOrderName').value = o.name || '';
+  currentCat = 'burger';
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.cat === 'burger'));
+  renderProducts();
+  renderCart();
+  $('cart').classList.add('open');
+  showToast(`Modification de ${fmtNum(o.number)}`);
+}
+
+function openJournalTab() {
+  currentCat = 'journal';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  renderProducts();
+  $('modeSwitch').classList.remove('show');
+  $('products').scrollTo({ top: 0 });
+  return false;
+}
+window.openJournalTab = openJournalTab;
+
+/* ---------- RÉGLAGES ---------- */
+function renderSupplementAdmin() {
+  const el = $('supplementAdminList'); if (!el) return;
+  el.innerHTML = SUPPLEMENTS.map((s, i) => `
+    <div class="supp-admin-row">
+      <input class="supp-admin-input" data-sname="${i}" value="${esc(s.name)}">
+      <input class="supp-admin-input" type="number" step="0.01" min="0" data-sprice="${i}" value="${Number(s.price).toFixed(2)}">
+      <button type="button" class="supp-admin-btn supp-admin-delete" data-delete-supp="${i}">🗑</button>
+    </div>`).join('');
+  el.querySelectorAll('[data-sname]').forEach(inp => inp.addEventListener('change', () => {
+    const i = Number(inp.dataset.sname);
+    SUPPLEMENTS[i].name = inp.value.trim() || SUPPLEMENTS[i].name;
+    saveSupplements();
+  }));
+  el.querySelectorAll('[data-sprice]').forEach(inp => inp.addEventListener('change', () => {
+    const i = Number(inp.dataset.sprice);
+    SUPPLEMENTS[i].price = Math.max(0, round2(String(inp.value).replace(',', '.')) || 0);
+    saveSupplements();
+  }));
+  el.querySelectorAll('[data-delete-supp]').forEach(btn => btn.addEventListener('click', async () => {
+    const i = Number(btn.dataset.deleteSupp);
+    if (!(await appConfirm('Supprimer', `Supprimer « ${SUPPLEMENTS[i].name} » ?`, 'Supprimer', true))) return;
+    SUPPLEMENTS.splice(i, 1);
+    saveSupplements(); renderSupplementAdmin(); showToast('Supplément supprimé');
+  }));
+}
+
+async function addSupplement() {
+  const r = await appDialog({
+    title: 'Nouveau supplément',
+    fields: [{ id: 'name', label: 'Nom' }, { id: 'price', label: 'Prix (€)', type: 'number', step: '0.01', value: '1.00' }],
+    buttons: [{ label: 'Annuler', value: false }, { label: 'Ajouter', value: true, cls: 'btn-confirm' }]
+  });
+  if (!r || !String(r.name).trim()) return;
+  const price = Math.max(0, round2(String(r.price || '0').replace(',', '.')) || 0);
+  SUPPLEMENTS.push({ id: 'supp_' + Date.now(), name: String(r.name).trim(), price });
+  saveSupplements(); renderSupplementAdmin(); showToast('Supplément ajouté');
+}
+
+function renderProductAdmin() {
+  const el = $('productAdminList'); if (!el) return;
+  el.innerHTML = PRODUCTS.map((p, i) => `
+    <div class="product-admin-row">
+      <div>
+        <input class="product-admin-input" data-pname="${i}" value="${esc(p.name)}">
+        <div class="product-admin-cat">${esc(p.cat)}</div>
+      </div>
+      <input class="product-admin-input" type="number" step="0.01" min="0" data-psolo="${i}" value="${Number(p.price).toFixed(2)}" title="Prix seul">
+      <input class="product-admin-input" type="number" step="0.01" min="0" data-pmenu="${i}" value="${Number(p.menuPrice ?? p.price).toFixed(2)}" title="Prix menu">
+      <div class="product-admin-actions">
+        <button type="button" class="product-admin-btn product-admin-edit" data-save-product="${i}">✓</button>
+        <button type="button" class="product-admin-btn product-admin-delete" data-delete-product="${i}">🗑</button>
+      </div>
+    </div>`).join('');
+
+  el.querySelectorAll('[data-save-product]').forEach(btn => btn.addEventListener('click', () => {
+    const i = Number(btn.dataset.saveProduct);
+    const num = sel => Number(String(el.querySelector(sel).value || '').replace(',', '.'));
+    const solo = num(`[data-psolo="${i}"]`), menu = num(`[data-pmenu="${i}"]`);
+    PRODUCTS[i].name = el.querySelector(`[data-pname="${i}"]`).value.trim() || PRODUCTS[i].name;
+    if (Number.isFinite(solo) && solo >= 0) PRODUCTS[i].price = round2(solo);
+    PRODUCTS[i].menuPrice = Number.isFinite(menu) && menu >= 0 ? round2(menu) : PRODUCTS[i].price;
+    saveProducts(); renderProductAdmin(); showToast('Produit modifié');
+  }));
+  el.querySelectorAll('[data-delete-product]').forEach(btn => btn.addEventListener('click', async () => {
+    const i = Number(btn.dataset.deleteProduct);
+    if (!(await appConfirm('Supprimer', `Supprimer « ${PRODUCTS[i].name} » ?`, 'Supprimer', true))) return;
+    PRODUCTS.splice(i, 1);
+    saveProducts(); renderProductAdmin(); showToast('Produit supprimé');
+  }));
+}
+
+function openProductForm() {
+  const el = $('productAdminList'); if (!el) return;
+  if ($('newProductForm')) { $('newProductForm').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  el.insertAdjacentHTML('afterbegin', `
+    <div class="settings-card" id="newProductForm">
+      <div style="font-weight:800;margin-bottom:10px">Nouveau produit</div>
+      <div class="product-form">
+        <label>Nom<input id="newPName" type="text" placeholder="Nom du produit"></label>
+        <label>Catégorie
+          <select id="newPCat">
+            <option value="burger">Burger</option><option value="wrap">Wrap</option>
+            <option value="side">Accompagnement</option><option value="drink">Boisson</option>
+          </select>
+        </label>
+        <label>Prix SEUL (€)<input id="newPSolo" type="number" step="0.01" min="0"></label>
+        <label>Prix MENU (€)<input id="newPMenu" type="number" step="0.01" min="0"></label>
+        <label class="full">Description<input id="newPDesc" type="text" placeholder="Description"></label>
+        <div class="full" style="display:flex;gap:8px">
+          <button type="button" class="product-admin-add" id="confirmNewProduct">Ajouter</button>
+          <button type="button" class="product-admin-btn" id="cancelNewProduct" style="background:var(--surface-3)">Annuler</button>
+        </div>
+      </div>
+    </div>`);
+  $('confirmNewProduct').addEventListener('click', () => {
+    const name = ($('newPName').value || '').trim();
+    const cat = $('newPCat').value;
+    const solo = Number(String($('newPSolo').value || '').replace(',', '.'));
+    const menuRaw = String($('newPMenu').value || '').replace(',', '.');
+    if (!name) { showToast('Indiquez un nom'); $('newPName').focus(); return; }
+    if (!$('newPSolo').value || !Number.isFinite(solo) || solo < 0) { showToast('Prix SEUL invalide'); $('newPSolo').focus(); return; }
+    const menu = menuRaw === '' ? solo : Number(menuRaw);
+    PRODUCTS.push({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      name, desc: ($('newPDesc').value || '').trim(),
+      price: round2(solo), menuPrice: round2(Number.isFinite(menu) && menu >= 0 ? menu : solo),
+      emoji: { burger:'🍔', wrap:'🌯', side:'🍟', drink:'🥤' }[cat] || '🍔', cat
+    });
+    saveProducts(); renderSettings(); showToast('Produit ajouté');
+  });
+  $('cancelNewProduct').addEventListener('click', renderSettings);
+  $('newPName').focus();
+}
+
+function renderSettings() {
+  $('products').innerHTML = `
+    <div class="settings">
+      <div class="settings-title">⚙️ Réglages</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div><div class="settings-label">Nom du restaurant</div><div class="settings-value">Affiché en haut et sur les tickets</div></div>
+          <input class="settings-input" id="settingRestaurantName" value="${esc(settings.restaurantName)}">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Préfixe commande</div><div class="settings-value">Ex. #0001</div></div>
+          <input class="settings-input" id="settingOrderPrefix" value="${esc(settings.orderPrefix)}">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Prochaine commande</div><div class="settings-value">Numérotation séquentielle</div></div>
+          <input class="settings-input" id="settingNextNumber" type="number" min="1" value="${orderNumber + 1}">
+        </div>
+        <button type="button" class="settings-btn btn-confirm" id="saveSettings" style="width:100%;margin-top:14px">Enregistrer les réglages</button>
+      </div>
+      ${cardSettingsHTML()}
+      <div class="settings-card">
+        <div class="settings-label">Produits</div>
+        <div class="settings-value" style="margin-top:4px">Nom · prix SEUL · prix MENU</div>
+        <div id="productAdminList" style="margin-top:12px"></div>
+        <button type="button" class="product-admin-add" id="addProductBtn">＋ Ajouter un produit</button>
+      </div>
+      <div class="settings-card">
+        <div class="settings-label">Suppléments</div>
+        <div class="settings-value" style="margin-top:4px">Proposés pour les Burgers et Wraps</div>
+        <div id="supplementAdminList" class="supp-admin-list"></div>
+        <button type="button" class="supp-admin-add" id="addSupplementBtn">＋ Ajouter un supplément</button>
+      </div>
+      <div class="settings-card">
+        <div class="settings-label">Journal</div>
+        <div class="settings-row">
+          <div><div class="settings-label">Effacer toutes les commandes</div><div class="settings-value">Action irréversible</div></div>
+          <button type="button" class="settings-btn" id="clearJournal" style="background:var(--danger);color:#fff">Effacer</button>
+        </div>
+      </div>
+    </div>`;
+  renderProductAdmin();
+  renderSupplementAdmin();
+  $('addProductBtn').addEventListener('click', openProductForm);
+  $('addSupplementBtn').addEventListener('click', addSupplement);
+  bindCardSettings();
+  $('saveSettings').addEventListener('click', () => {
+    settings.restaurantName = $('settingRestaurantName').value.trim() || 'BURGER CO.';
+    settings.orderPrefix = $('settingOrderPrefix').value.trim() || '#';
+    orderNumber = Math.max(1, parseInt($('settingNextNumber').value || '1', 10)) - 1;
+    persist('burgerCoSettings', settings);
+    persist('burgerCoOrderNumber', String(orderNumber));
+    applySettings();
+    showToast('Réglages enregistrés');
+  });
+  $('clearJournal').addEventListener('click', async () => {
+    if (!(await appConfirm('Effacer le journal', 'Toutes les commandes seront supprimées. Action irréversible.', 'Effacer', true))) return;
+    journal = []; saveJournal();
+    orderNumber = 0; persist('burgerCoOrderNumber', '0');
+    editingOrderIndex = null;
+    renderSettings(); renderCart(); showToast('Journal effacé · numérotation remise à 1');
+  });
+}
+
+/* ---------- CARTE DE VISITE ---------- */
+function cardLines(c) {
+  const L = [];
+  if (c.phone) L.push(['📞', c.phone]);
+  if (c.address) L.push(['📍', c.address]);
+  if (c.hours) L.push(['🕒', c.hours]);
+  if (c.email) L.push(['✉️', c.email]);
+  if (c.social) L.push(['🌐', c.social]);
+  return L;
+}
+
+function openCard() {
+  const c = getCard();
+  const lines = cardLines(c);
+  const tel = c.phone ? String(c.phone).replace(/[^\d+]/g, '') : '';
+  const logo = c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(c.logoEmoji);
+  $('cardContent').innerHTML = `
+    <div class="bizcard" style="--card:${safeColor(c.color)}">
+      <div class="bizcard-top">
+        <div class="bizcard-logo">${logo}</div>
+        <div>
+          <div class="bizcard-name">${esc(settings.restaurantName)}</div>
+          ${c.tagline ? `<div class="bizcard-tag">${esc(c.tagline)}</div>` : ''}
+        </div>
+      </div>
+      ${lines.length
+        ? `<div class="bizcard-lines">${lines.map(([ic, t]) => `<div class="bizcard-line"><span>${ic}</span><span>${esc(t)}</span></div>`).join('')}</div>`
+        : '<div class="bizcard-empty">Aucune coordonnée pour l\'instant.</div>'}
+      ${c.note ? `<div class="bizcard-note">${esc(c.note)}</div>` : ''}
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button type="button" class="btn-cancel" data-act="edit">✏️ Personnaliser</button>
+      <button type="button" class="btn-cancel" data-act="share">📤 Partager</button>
+    </div>
+    <div class="modal-actions" style="margin-top:10px">
+      ${tel ? `<a class="btn-cancel" href="tel:${esc(tel)}" style="text-decoration:none;display:flex;align-items:center;justify-content:center">📞 Appeler</a>` : ''}
+      <button type="button" class="btn-confirm" data-act="close">Fermer</button>
+    </div>`;
+  $('cardModalBg').classList.add('show');
+}
+
+function cardText() {
+  const c = getCard();
+  return [settings.restaurantName, c.tagline, '', ...cardLines(c).map(([ic, t]) => ic + ' ' + t), c.note ? '' : null, c.note || null]
+    .filter(x => x !== null && x !== undefined).join('\n').trim();
+}
+
+function saveCard(patch) {
+  settings.card = Object.assign(getCard(), patch);
+  persist('burgerCoSettings', settings);
+  applySettings();
+}
+
+function readCardForm() {
+  const g = id => ($(id)?.value || '').trim();
+  return {
+    logoEmoji: g('cardLogoEmoji') || CARD_DEFAULT.logoEmoji,
+    tagline: g('cardTagline'), phone: g('cardPhone'), address: g('cardAddress'),
+    hours: g('cardHours'), email: g('cardEmail'), social: g('cardSocial'),
+    note: g('cardNote'), color: safeColor($('cardColor')?.value)
+  };
+}
+
+function cardSettingsHTML() {
+  const c = getCard();
+  const prev = c.logo ? `<img class="card-logo-prev" src="${esc(c.logo)}" alt="">` : `<span class="card-logo-prev">${esc(c.logoEmoji)}</span>`;
+  return `
+    <div class="settings-card">
+      <div class="settings-label">Carte de visite</div>
+      <div class="settings-value" style="margin:4px 0 14px">Touchez le nom du restaurant en haut de l'écran pour l'afficher.</div>
+      <div class="card-form">
+        <div class="card-logo-row">
+          ${prev}
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="product-admin-btn card-file-btn">Choisir un logo<input id="cardLogoFile" type="file" accept="image/*" hidden></label>
+            ${c.logo ? '<button type="button" class="product-admin-btn product-admin-delete" id="cardLogoRemove">Retirer</button>' : ''}
+          </div>
+        </div>
+        <label>Emoji (utilisé si pas de logo)<input id="cardLogoEmoji" maxlength="4" value="${esc(c.logoEmoji)}"></label>
+        <label>Slogan<input id="cardTagline" maxlength="60" value="${esc(c.tagline)}" placeholder="Burgers &amp; wraps maison"></label>
+        <label>Téléphone<input id="cardPhone" type="tel" value="${esc(c.phone)}" placeholder="+590 6 90 00 00 00"></label>
+        <label>Adresse<input id="cardAddress" value="${esc(c.address)}" placeholder="Rue, ville"></label>
+        <label>Horaires<input id="cardHours" value="${esc(c.hours)}" placeholder="Mar–Dim · 11h–22h"></label>
+        <label>E-mail<input id="cardEmail" type="email" value="${esc(c.email)}" placeholder="contact@exemple.fr"></label>
+        <label>Réseaux / site web<input id="cardSocial" value="${esc(c.social)}" placeholder="@burgerco · burgerco.fr"></label>
+        <label>Message<textarea id="cardNote" rows="2" maxlength="140" placeholder="Merci de votre visite !">${esc(c.note)}</textarea></label>
+        <label>Couleur de la carte<input id="cardColor" type="color" value="${safeColor(c.color)}"></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button type="button" class="settings-btn btn-cancel" id="cardPreview" style="flex:1">Aperçu</button>
+        <button type="button" class="settings-btn btn-confirm" id="cardSave" style="flex:1">Enregistrer la carte</button>
+      </div>
+    </div>`;
+}
+
+function handleLogoFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const s = 160, cv = document.createElement('canvas');
+      cv.width = cv.height = s;
+      const m = Math.min(img.width, img.height);
+      cv.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, s, s);
+      saveCard(Object.assign(readCardForm(), { logo: cv.toDataURL('image/jpeg', 0.85) }));
+      renderSettings();
+      showToast('Logo enregistré');
+    };
+    img.onerror = () => showToast('Image illisible');
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function bindCardSettings() {
+  $('cardSave').addEventListener('click', () => { saveCard(readCardForm()); showToast('Carte enregistrée'); });
+  $('cardPreview').addEventListener('click', () => { saveCard(readCardForm()); openCard(); });
+  $('cardLogoFile').addEventListener('change', e => handleLogoFile(e.target.files[0]));
+  const rm = $('cardLogoRemove');
+  if (rm) rm.addEventListener('click', () => { saveCard(Object.assign(readCardForm(), { logo: '' })); renderSettings(); });
+}
+
+/* ---------- ÉVÉNEMENTS ---------- */
+$('products').addEventListener('click', e => {
+  const j = e.target.closest('[data-jact]');
+  if (j) {
+    const i = Number(j.dataset.i);
+    switch (j.dataset.jact) {
+      case 'ticket': openTicket(i); break;
+      case 'edit': editOrder(i); break;
+      case 'pay': payReceptionOrder(i); break;
+      case 'pickup': markOrderPickedUp(i); break;
+      case 'delete': deleteOrder(i); break;
+      case 'share-accounting': shareText('Résumé comptable', buildAccountingText(), 'Résumé comptable copié'); break;
+    }
+    return;
+  }
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const p = PRODUCTS.find(x => String(x.id) === String(card.dataset.id));
+  if (!p) return;
+  if (p.cat === 'burger' || p.cat === 'wrap') openSuppModal(p);
+  else addProductToCart(p, []);
+});
+
+$('suppContent').addEventListener('click', e => {
+  const supp = e.target.closest('[data-supp]');
+  if (supp) {
+    const s = SUPPLEMENTS.find(x => String(x.id) === supp.dataset.supp);
+    if (!s) return;
+    const idx = pendingSupps.findIndex(x => x.id === s.id);
+    if (idx >= 0) pendingSupps.splice(idx, 1); else pendingSupps.push(s);
+    renderSuppList();
+    return;
+  }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (!act) return;
+  const p = pendingProduct;
+  if (act === 'yes') renderSuppList();
+  else if (act === 'no') { closeSuppModal(); addProductToCart(p, []); }
+  else if (act === 'ok') { const list = pendingSupps.slice(); closeSuppModal(); addProductToCart(p, list); }
+  else if (act === 'cancel') closeSuppModal();
+});
+$('suppModalBg').addEventListener('click', e => { if (e.target === $('suppModalBg')) closeSuppModal(); });
+
+$('cartItems').addEventListener('click', e => {
+  const btn = e.target.closest('.qty-btn');
+  if (btn) changeQty(btn.dataset.key, Number(btn.dataset.d));
+});
+$('cart').addEventListener('click', e => {
+  if (e.target.closest('.qty-btn') || e.target.closest('.pay-btn') || e.target.closest('input') || e.target.closest('.cancel-edit-btn')) return;
+  const open = $('cart').classList.contains('open');
+  if (open && !e.target.closest('.cart-header')) return;
+  $('cart').classList.toggle('open');
+});
+$('cartOrderName').addEventListener('input', () => { $('orderName').value = $('cartOrderName').value; });
+$('orderName').addEventListener('input', () => { $('cartOrderName').value = $('orderName').value; });
+$('cancelEditBtn').addEventListener('click', () => { resetOrderState(); showToast('Modification annulée'); });
+
+$('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  currentCat = t.dataset.cat;
+  renderProducts();
+  $('products').scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+$('modeSwitch').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn'); if (!btn || btn.dataset.mode === orderMode) return;
+  document.querySelectorAll('.mode-btn').forEach(x => x.classList.toggle('active', x === btn));
+  orderMode = btn.dataset.mode;
+  renderProducts();
+  showToast(orderMode === 'menu' ? 'Mode MENU sélectionné' : 'Mode SEUL sélectionné');
+});
+
+$('settingsHeaderBtn').addEventListener('click', () => {
+  currentCat = 'settings';
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  renderProducts();
+  $('modeSwitch').classList.remove('show');
+  $('products').scrollTo({ top: 0 });
+});
+$('journalHeaderBtn').addEventListener('click', openJournalTab);
+
+$('payBtn').addEventListener('click', openModal);
+$('cancelBtn').addEventListener('click', closeModal);
+$('confirmBtn').addEventListener('click', confirmPay);
+$('cashReceived').addEventListener('input', updateCashResult);
+$('cashQuick').addEventListener('click', e => {
+  const b = e.target.closest('[data-cash-amt]'); if (!b) return;
+  $('cashReceived').value = b.dataset.cashAmt;
+  updateCashResult();
+});
+$('quickCalcBtn').addEventListener('click', openCalculator);
+$('modalBg').addEventListener('click', e => {
+  if (e.target === $('modalBg')) { closeModal(); return; }
+  const pay = e.target.closest('[data-pay]');
+  if (pay) { setPayMethod(pay.dataset.pay); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'new') { closeModal(); renderProducts(); }
+  else if (act === 'journal') { closeModal(); openJournalTab(); }
+});
+
+$('closeCalculator').addEventListener('click', closeCalculator);
+$('calculatorModal').addEventListener('click', e => {
+  if (e.target === $('calculatorModal')) { closeCalculator(); return; }
+  const k = e.target.closest('[data-calc]');
+  if (k) calcKey(k.dataset.calc);
+});
+
+$('homeBtn').addEventListener('click', () => {
+  currentCat = 'burger';
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.cat === 'burger'));
+  renderProducts();
+  $('products').scrollTo({ top: 0 });
+});
+
+$('logoBtn').addEventListener('click', openCard);
+$('logoBtn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(); } });
+$('cardModalBg').addEventListener('click', e => {
+  if (e.target === $('cardModalBg')) { $('cardModalBg').classList.remove('show'); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'close') $('cardModalBg').classList.remove('show');
+  else if (act === 'share') shareText(settings.restaurantName, cardText(), 'Carte copiée');
+  else if (act === 'edit') { $('cardModalBg').classList.remove('show'); $('settingsHeaderBtn').click(); }
+});
+$('ticketModalBg').addEventListener('click', e => {
+  if (e.target === $('ticketModalBg')) { $('ticketModalBg').classList.remove('show'); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'close') $('ticketModalBg').classList.remove('show');
+  else if (act === 'print') printTicketNow();
+  else if (act === 'share' && journal[ticketIndex]) shareText('Commande ' + fmtNum(journal[ticketIndex].number), orderText(journal[ticketIndex]), 'Ticket copié');
+});
+
+/* ---------- MODE APP (hors ligne) ---------- */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+
+/* ---------- INIT ---------- */
+applySettings();
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>
